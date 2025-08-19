@@ -101,10 +101,16 @@ namespace IngameScript
             if(y1 > planeheight)    //Bomb will fall before reaching max speed.
             {
                 t_total = (-localVelYSigned + Math.Sqrt(localVelYSigned * localVelYSigned + 2 * refcockpit.GetNaturalGravity().Length() * planeheight)) / refcockpit.GetNaturalGravity().Length();
-                Echo(t_total.ToString());
+            }
+            else
+            {
+                double y2 = planeheight - y1;
+                double t_impact = y2 / _speedLimit;
+                t_total = t_uymax + t_impact;
             }
 
-            Echo("T_uymax: " + t_uymax + " \nY1: " + y1 + " |\n g: " + refcockpit.GetNaturalGravity().Length());
+            Echo("Impact in: " + t_total.ToString());
+            Echo("U_Y: " + localVelYSigned + "\nU_X: " + localVel.Z + "\nU: " + localVel.Length() + "\nTUYMAX: " + t_uymax);
 
 
         }
