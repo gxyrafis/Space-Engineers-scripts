@@ -95,8 +95,7 @@ namespace IngameScript
                 Vector3D uxuy = refcockpit.GetShipVelocities().LinearVelocity;
                 double utotal = refcockpit.GetShipSpeed();
                 double uvertical = -Vector3D.Dot(uxuy, Vector3D.Normalize(refcockpit.GetNaturalGravity())); //Find DOWNWARDS SPEED based on gravity pull!
-                double uhorizontal = (uxuy - uvertical * Vector3D.Normalize(refcockpit.GetNaturalGravity())).Length();
-                //double uhorizontal = (Math.Sqrt(uxuy.X * uxuy.X + uxuy.Y * uxuy.Y));
+                double uhorizontal = (Math.Sqrt(uxuy.X * uxuy.X + uxuy.Y * uxuy.Y));
 
                 // Transform into local grid (cockpit-relative)
                 MatrixD cockpitMatrix = refcockpit.WorldMatrix;
