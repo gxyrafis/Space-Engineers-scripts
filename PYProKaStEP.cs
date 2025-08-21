@@ -69,6 +69,8 @@ namespace IngameScript
 
         public void Main(string argument, UpdateType updateSource)
         {
+            Vector3D temp = new Vector3D(0,52.55,99);
+            Echo(Vector3D.ClampToSphere(temp, _speedLimit).ToString("N2"));
             double planeheight;
             refcockpit.TryGetPlanetElevation(MyPlanetElevation.Surface, out planeheight);
             if (refcockpit.GetShipSpeed() > speedbegin && !begin)
@@ -94,23 +96,26 @@ namespace IngameScript
 
                 Vector3D uxuy = refcockpit.GetShipVelocities().LinearVelocity;
                 double utotal = refcockpit.GetShipSpeed();
-                double uvertical = -Vector3D.Dot(uxuy, Vector3D.Normalize(refcockpit.GetNaturalGravity())); //Find DOWNWARDS SPEED based on gravity pull!
-                double uhorizontal = (Math.Sqrt(uxuy.X * uxuy.X + uxuy.Y * uxuy.Y));
+                Vector3D gravity = refcockpit.GetNaturalGravity();
+                //double uvertical = -Vector3D.Dot(uxuy, Vector3D.Normalize(refcockpit.GetNaturalGravity())); //Find DOWNWARDS SPEED based on gravity pull!
+                Vector3D uvertical = Vector3D.ProjectOnVector(ref uxuy, ref gravity);
+                Vector3D uhorizontal = uxuy - uvertical;
 
                 // Transform into local grid (cockpit-relative)
                 MatrixD cockpitMatrix = refcockpit.WorldMatrix;
                 Vector3D localVel = Vector3D.TransformNormal(uxuy, MatrixD.Transpose(cockpitMatrix));   //Y Up and Down, Z Front Back, X Sideways
+                IMyCameraBlock cam;
 
                 //Timestamps
                 double t_total;
                 double t_uymax;
-                t_uymax = (_speedLimit - uvertical) / Math.Abs(refcockpit.GetNaturalGravity().Length());
+                t_uymax = (_speedLimit - uvertical.Length()) / Math.Abs(refcockpit.GetNaturalGravity().Length());
 
-                double y1 = uvertical * t_uymax + 0.5 * refcockpit.GetNaturalGravity().Length() * t_uymax * t_uymax;
+                double y1 = uvertical.Length() * t_uymax + 0.5 * refcockpit.GetNaturalGravity().Length() * t_uymax * t_uymax;
 
                 if (y1 > planeheight)    //Bomb will fall before reaching max speed.
                 {
-                    t_total = (-uvertical + Math.Sqrt(uvertical * uvertical + 2 * refcockpit.GetNaturalGravity().Length() * planeheight)) / refcockpit.GetNaturalGravity().Length();
+                    t_total = (-uvertical.Length() + Math.Sqrt(uvertical.Length() * uvertical.Length() + 2 * refcockpit.GetNaturalGravity().Length() * planeheight)) / refcockpit.GetNaturalGravity().Length();
                 }
                 else
                 {
@@ -123,9 +128,11 @@ namespace IngameScript
                     double seaheight;
                     refcockpit.TryGetPlanetElevation(MyPlanetElevation.Sealevel, out seaheight);
                     PYProKaStEP.CustomData += "\nIt: " + iteration +
-                        "\nVy: " + uvertical.ToString("N2") + " || Vx: " + uhorizontal.ToString("N2") + "\nT_uyMAX: " + t_uymax.ToString("N2") + " || T_total: " + t_total.ToString("N2") + "\nY1: " + y1 + " || Y2: " + (planeheight - y1).ToString("N2") +
-                        " || Height: " + planeheight.ToString("N2") +" || S Height: "+ seaheight+ "\nD : " + Math.Sqrt((currentpost.X - initialpos.X)*(currentpost.X - initialpos.X) + (currentpost.Y - initialpos.Y) * (currentpost.Y - initialpos.Y)).ToString("N2") +
-                        "\nGrav V L: " + refcockpit.GetNaturalGravity().Length().ToString("N2") + "\nGrav V D: " +
+                        "\nVy: " + uvertical.Length().ToString("N2") + " || Vx: " + uhorizontal.Length().ToString("N2") +" || Vtotal: " + uxuy.Length().ToString("N2") + " || C Vt: "
+                        + Math.Sqrt(uvertical.Length() * uvertical.Length() + uhorizontal.Length() * uhorizontal.Length()).ToString("N2")
+                        + "\nT_uyMAX: " + t_uymax.ToString("N2") + " || T_total: " + t_total.ToString("N2") + "\nY1: " + y1.ToString("N2") + " || Y2: " + (planeheight - y1).ToString("N2") +
+                        " || Height: " + planeheight.ToString("N2") +" || S Height: "+ seaheight.ToString("N2")+ "\nD : " + Math.Sqrt((currentpost.X - initialpos.X)*(currentpost.X - initialpos.X) + (currentpost.Y - initialpos.Y) * (currentpost.Y - initialpos.Y)).ToString("N2") +
+                        "\n3D1: " + initialpos.ToString("N2") + "|| 3D2:" + currentpost.ToString("N2") +"\nGrav V L: " + refcockpit.GetNaturalGravity().Length().ToString("N2") + "\nGrav V D: " +
                         Math.Abs(refcockpit.GetNaturalGravity().Z).ToString("N2") + "\nT: " + (iteration / 6.00).ToString("N2") +
                         "\n-----";
                 }
